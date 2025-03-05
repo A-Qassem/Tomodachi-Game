@@ -117,8 +117,6 @@ namespace Tomodachi_Game
         void CloseThreads()
         {
             CloseThread = true;
-            player.CloseThread = true;
-
             if (WaitingThread != null && WaitingThread.IsAlive)
             {
                 WaitingThread.Join();

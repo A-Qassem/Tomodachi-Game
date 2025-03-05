@@ -29,29 +29,21 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GamePlay));
-            RoundNum = new Label();
             Word = new Label();
             GuessTextBox = new TextBox();
             EnterGuess = new Button();
-            PlayerName = new Label();
+            StateLabel = new Label();
+            ModeLabel = new Label();
+            PasswordLabel = new Label();
+            label1 = new Label();
             SuspendLayout();
-            // 
-            // RoundNum
-            // 
-            RoundNum.AutoSize = true;
-            RoundNum.Font = new Font("Showcard Gothic", 36F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            RoundNum.ForeColor = SystemColors.ButtonHighlight;
-            RoundNum.Location = new Point(74, 59);
-            RoundNum.Name = "RoundNum";
-            RoundNum.Size = new Size(248, 74);
-            RoundNum.TabIndex = 0;
-            RoundNum.Text = "Round ";
             // 
             // Word
             // 
             Word.AutoSize = true;
             Word.Font = new Font("Showcard Gothic", 28.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            Word.Location = new Point(376, 205);
+            Word.ForeColor = SystemColors.ButtonHighlight;
+            Word.Location = new Point(731, 445);
             Word.Name = "Word";
             Word.Size = new Size(196, 59);
             Word.TabIndex = 1;
@@ -59,7 +51,7 @@
             // 
             // GuessTextBox
             // 
-            GuessTextBox.Location = new Point(376, 307);
+            GuessTextBox.Location = new Point(407, 246);
             GuessTextBox.Name = "GuessTextBox";
             GuessTextBox.Size = new Size(196, 27);
             GuessTextBox.TabIndex = 2;
@@ -67,7 +59,7 @@
             // EnterGuess
             // 
             EnterGuess.Font = new Font("Showcard Gothic", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            EnterGuess.Location = new Point(376, 352);
+            EnterGuess.Location = new Point(407, 345);
             EnterGuess.Name = "EnterGuess";
             EnterGuess.Size = new Size(196, 46);
             EnterGuess.TabIndex = 3;
@@ -75,16 +67,52 @@
             EnterGuess.UseVisualStyleBackColor = true;
             EnterGuess.Click += EnterGuess_Click;
             // 
-            // PlayerName
+            // StateLabel
             // 
-            PlayerName.AutoSize = true;
-            PlayerName.Font = new Font("Showcard Gothic", 28.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            PlayerName.ForeColor = SystemColors.ButtonHighlight;
-            PlayerName.Location = new Point(778, 415);
-            PlayerName.Name = "PlayerName";
-            PlayerName.Size = new Size(150, 59);
-            PlayerName.TabIndex = 4;
-            PlayerName.Text = "Turn";
+            StateLabel.AutoSize = true;
+            StateLabel.Font = new Font("Showcard Gothic", 24F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            StateLabel.ForeColor = SystemColors.ButtonHighlight;
+            StateLabel.Location = new Point(172, 177);
+            StateLabel.Name = "StateLabel";
+            StateLabel.Size = new Size(142, 50);
+            StateLabel.TabIndex = 5;
+            StateLabel.Text = "State";
+            // 
+            // ModeLabel
+            // 
+            ModeLabel.AutoSize = true;
+            ModeLabel.BackColor = Color.Transparent;
+            ModeLabel.Font = new Font("Showcard Gothic", 22.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            ModeLabel.ForeColor = SystemColors.ButtonHighlight;
+            ModeLabel.Location = new Point(22, 177);
+            ModeLabel.Name = "ModeLabel";
+            ModeLabel.Size = new Size(144, 46);
+            ModeLabel.TabIndex = 6;
+            ModeLabel.Text = "Mode: ";
+            // 
+            // PasswordLabel
+            // 
+            PasswordLabel.AutoSize = true;
+            PasswordLabel.BackColor = Color.Transparent;
+            PasswordLabel.Font = new Font("Showcard Gothic", 18F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            PasswordLabel.ForeColor = SystemColors.ButtonHighlight;
+            PasswordLabel.Location = new Point(390, 445);
+            PasswordLabel.Name = "PasswordLabel";
+            PasswordLabel.Size = new Size(303, 37);
+            PasswordLabel.TabIndex = 7;
+            PasswordLabel.Text = "Password Length";
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.BackColor = Color.Transparent;
+            label1.Font = new Font("Showcard Gothic", 24F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            label1.ForeColor = SystemColors.ButtonHighlight;
+            label1.Location = new Point(319, 50);
+            label1.Name = "label1";
+            label1.Size = new Size(374, 50);
+            label1.TabIndex = 8;
+            label1.Text = "Tomodachi Game";
             // 
             // GamePlay
             // 
@@ -92,11 +120,13 @@
             AutoScaleMode = AutoScaleMode.Font;
             BackgroundImage = (Image)resources.GetObject("$this.BackgroundImage");
             ClientSize = new Size(1050, 589);
-            Controls.Add(PlayerName);
+            Controls.Add(label1);
+            Controls.Add(PasswordLabel);
+            Controls.Add(ModeLabel);
+            Controls.Add(StateLabel);
             Controls.Add(EnterGuess);
             Controls.Add(GuessTextBox);
             Controls.Add(Word);
-            Controls.Add(RoundNum);
             Name = "GamePlay";
             Text = "GamePlay";
             FormClosing += GamePlay_FormClosing;
@@ -105,11 +135,12 @@
         }
 
         #endregion
-
-        private Label RoundNum;
         private Label Word;
         private TextBox GuessTextBox;
         private Button EnterGuess;
-        private Label PlayerName;
+        private Label StateLabel;
+        private Label ModeLabel;
+        private Label PasswordLabel;
+        private Label label1;
     }
 }

@@ -4,20 +4,27 @@ using System.Text;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Tomodachi_Game_Server;
+using System.Runtime.InteropServices;
 
 namespace Tomodachi_Game_Server
 {
     class Server
     {
-        internal TcpListener listener;
+        internal TcpListener? listener;
         internal Dictionary<string, TcpClient> PlayersConnections = new();
         internal Dictionary<string, Room> Rooms = new();
+
+        private Queue<(string request, TcpClient client)> requestQueue = new();
+        private readonly object queueLock = new();
+        private bool isProcessing = false;
 
         public void StartServer()
         {
             listener = new TcpListener(IPAddress.Any, 5000);
             listener.Start();
             Console.WriteLine("Server started on port 5000...");
+
+            Task.Run(ProcessQueue); 
 
             while (true)
             {
@@ -40,7 +47,11 @@ namespace Tomodachi_Game_Server
 
                     string request = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                     Console.WriteLine($"Received: {request}");
-                    ProcessRequest(request, client);
+
+                    lock (queueLock)
+                    {
+                        requestQueue.Enqueue((request, client));
+                    }
                 }
             }
             catch (Exception ex)
@@ -50,7 +61,27 @@ namespace Tomodachi_Game_Server
 
             client.Close();
         }
-
+        private void ProcessQueue()
+        {
+            while (true)
+            {
+                if (requestQueue.Count > 0)
+                {
+                    lock (queueLock)
+                    {
+                        if (requestQueue.Count > 0)
+                        {
+                            var task = requestQueue.Dequeue();
+                            ProcessRequest(task.request, task.client);
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
         internal void ProcessRequest(string request, TcpClient client)
         {
             string[] parts = request.Split(' ');
@@ -59,8 +90,6 @@ namespace Tomodachi_Game_Server
                 SendMessageToClient(client, "INVALID_REQUEST");
                 return;
             }
-
-            Console.WriteLine(request);
             string command = parts[0];
             string playerId = parts[1];
 
@@ -87,23 +116,17 @@ namespace Tomodachi_Game_Server
                 case "PLAYERS_NUM":
                     SendMessageToClient(client, Rooms[parts[1]].Players.Count.ToString());
                     break;
-                case "Round_Num":
-                    SendMessageToClient(client, Rooms[parts[1]].Round.ToString());
-                    break;
-                case "CHECK_GUESS":
-                    Rooms[parts[2]].GuessIsTrue(parts[3], this);
+                case "MY_TURN":
+                    Rooms[parts[2]].TellPlayersTheirTurn(client, parts[1], this);
                     break;
                 case "WORD":
                     SendMessageToClient(client, Rooms[parts[1]].Word.Length.ToString());
                     break;
-                case "NEXT_ROUND":
-                    Rooms[parts[1]].NextRound(this);
+                case "GUESS":
+                    Rooms[parts[2]].CheckGuess(this, parts[1], parts[3]);
                     break;
                 case "READY":
-                    if (parts.Length >= 3)
                         Rooms[parts[1]].PlayerReady(parts[2], this);
-                    else
-                        SendMessageToClient(client, "INVALID_REQUEST");
                     break;
                 default:
                     SendMessageToClient(client, "UNKNOWN_COMMAND");
@@ -189,17 +212,19 @@ namespace Tomodachi_Game_Server
         public string RoomId { get; }
         public string OwnerId { get; }
         internal List<string> Players = new();
-        List<string> Alive, Dead;
+        List<string> Alive;
         public bool IsStarted { get; internal set; } = false;
         public int Round { get; internal set; }
         public int Ready { get; internal set; }
         public string Word { get; set; }
 
+        List<string> Words = new List<string> { "apple", "banana", "cherry", "date", "elderberry", "fig", "grape", "honeydew", "kiwi", "lemon", "mango", "nectarine", "orange", "papaya", "quince", "raspberry", "strawberry", "tangerine", "watermelon" };
         public Room(string roomId, string ownerId)
         {
             RoomId = roomId;
             OwnerId = ownerId;
             Players.Add(ownerId);
+            Ready = 0;
         }
 
         internal string JoinToRoom(string playerId, Server server)
@@ -233,8 +258,8 @@ namespace Tomodachi_Game_Server
                 }
                 IsStarted = true;
                 Alive = Players;
-                Dead = new List<string>();
                 Ready = 0;
+                Round = 0;
                 return "GAME_STARTED";
             }
         }
@@ -250,16 +275,6 @@ namespace Tomodachi_Game_Server
             }
             else
                 TellAllPlayers(server, "REMOVE");
-        }
-
-        internal string GuessIsTrue(string guess, Server server)
-        {
-            if (guess == Word)
-            {
-
-                return "TRUE";
-            }
-            return $"FALSE {CountCommonCharacters(Word, guess)}";
         }
         int CountCommonCharacters(string a, string b)
         {
@@ -298,23 +313,50 @@ namespace Tomodachi_Game_Server
         internal string PlayerReady(string playerId, Server server)
         {
             Ready++;
+            Console.WriteLine(Ready);
+            TellAllPlayers(server, $"READY {Ready}");
+            Thread.Sleep(1000);
             if (Ready == Players.Count)
             {
-                ShuffleList(ref Alive);
-                Console.WriteLine("game start");
                 this.StartGamePlay(server);
                 return "Done";
             }
-            TellAllPlayers(server, $"READY {Ready}");
-            Console.WriteLine(Ready);
-
             return "Ready";
         }
 
 
         private void StartGamePlay(Server server)
         {
+            ShuffleList(ref Alive);
+            Console.WriteLine("game start");
             TellAllPlayers(server, "START_GAME_PLAY");
+            Word = Words[new Random().Next(0, Words.Count)];
+            TellAllPlayers(server, $"WORD {Word.Length}");
+
+        }
+
+        internal void TellPlayersTheirTurn(TcpClient client, string playerId, Server server)
+        {
+                server.SendMessageToClient(client, $"TURN {Alive[Round]}");
+        }
+
+        internal void CheckGuess(Server server, string playerId, string guess)
+        {
+            TellAllPlayers(server, $"GUESS {CountCommonCharacters(guess, Word)} {guess}");
+            if (Word == guess.ToLower())
+            {
+                TellAllPlayers(server, $"WIN {playerId}");
+            }
+            else
+            {
+                Round++;
+                if (Round == Alive.Count)
+                {
+                    TellAllPlayers(server, $"WIN -1");
+                }
+                
+                TellAllPlayers(server, $"TURN {Alive[Round]}");
+            }
         }
     }
 }

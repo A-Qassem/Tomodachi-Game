@@ -14,6 +14,8 @@ namespace Tomodachi_Game
             this.player = player;
             this.roomId = roomId;
             ReadyCounter.BackColor = Color.Transparent;
+            TimerLabel.BackColor = Color.Transparent;
+            TimerLabel.Visible = false;
             ReadyCounter.Text = $"0 Players ready";
             player.MessageReceived += OnMessageReceived;
         }
@@ -31,7 +33,17 @@ namespace Tomodachi_Game
                     ReadyCounter.Text = text;
                 }
             }
-            MessageBox.Show(message);
+            if(message == "START_GAME_PLAY")
+            {
+                Invoke(new Action(() =>
+                {
+                    player.MessageReceived -= OnMessageReceived;
+                    this.Hide();
+                    GamePlay gamePlay = new GamePlay(player, roomId);
+                    gamePlay.Show();
+                }));
+            }
+
         }
 
         void CloseThreads()

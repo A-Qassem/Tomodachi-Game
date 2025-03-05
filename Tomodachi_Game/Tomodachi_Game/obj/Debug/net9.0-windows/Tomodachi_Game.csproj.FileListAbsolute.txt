@@ -19,3 +19,5 @@ C:\Users\DELL\source\repos\Tomodachi_Game\Tomodachi_Game\obj\Debug\net9.0-window
 C:\Users\DELL\source\repos\Tomodachi_Game\Tomodachi_Game\obj\Debug\net9.0-windows\Tomodachi_Game.HowToPlay.resources
 C:\Users\DELL\source\repos\Tomodachi_Game\Tomodachi_Game\obj\Debug\net9.0-windows\Tomodachi_Game.WaitingRoom.resources
 C:\Users\DELL\source\repos\Tomodachi_Game\Tomodachi_Game\obj\Debug\net9.0-windows\Tomodachi_Game.GamePlay.resources
+C:\Users\DELL\source\repos\Tomodachi_Game\Tomodachi_Game\obj\Debug\net9.0-windows\Tomodachi_Game.Loser.resources
+C:\Users\DELL\source\repos\Tomodachi_Game\Tomodachi_Game\obj\Debug\net9.0-windows\Tomodachi_Game.Winner.resources

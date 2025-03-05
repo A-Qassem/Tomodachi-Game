@@ -13,69 +13,102 @@ namespace Tomodachi_Game
     public partial class GamePlay : Form
     {
         Player player;
-        Thread listeningThread;
         string roomId;
-        private bool stopThread;
-
         internal GamePlay(Player player, string roomId)
         {
             InitializeComponent();
-           /* this.player = player;
+            this.player = player;
             this.roomId = roomId;
-            RoundNum.BackColor = Color.FromArgb(11, 5, 51);
-            RoundNum.BackColor = Color.Transparent;
-            PlayerName.BackColor = Color.FromArgb(11, 5, 51);
-            Word.BackColor = Color.FromArgb(11, 5, 51);
-
             player.MessageReceived += OnMessageReceived;
-
-            listeningThread = new Thread(player.ListenToServer);
-            listeningThread.IsBackground = true;
-            listeningThread.Start();
-
-            RoundNum.Text = "ROUND " + player.SendRequestToServer($"Round_Num {roomId}");
-            PlayerName.Text = player.PlayerName + " TURN";
-            Word.Text = new string('*', int.Parse(player.SendRequestToServer($"WORD {roomId}"))).Replace("*", "* ");*/
+            Word.BackColor = Color.Transparent;
+            StateLabel.BackColor = Color.Transparent;
         }
-
+        private readonly object Lock = new();
         private void OnMessageReceived(string message)
         {
-            if (message == "NOT_YOUR_TURN")
-            {
-                // افتح فروم المشاهدة
-            }
 
+            if (message.StartsWith("WORD"))
+            {
+                string text = string.Join(" ", new string('*', int.Parse(message.Split()[1])).ToCharArray());
+                if (Word.InvokeRequired)
+                {
+                    Word.BeginInvoke((MethodInvoker)(() => Word.Text = text));
+                }
+                else
+                {
+                    Word.Text = text;
+                }
+                player.SendMessage($"MY_TURN {player.PlayerId} {roomId}");
+
+            }
+            if (message.StartsWith("TURN") && player.PlayerId == message.Split()[1])
+            {
+                GuessTextBox.Visible = true;
+                EnterGuess.Visible = true;
+                if (StateLabel.InvokeRequired)
+                {
+                    StateLabel.BeginInvoke((MethodInvoker)(() => StateLabel.Text = "Your Turn"));
+                }
+                else
+                {
+                    StateLabel.Text = "Your Turn";
+                }
+
+            }
+            if ((message.StartsWith("TURN") && player.PlayerId != message.Split()[1]) || message == "DEAD")
+            {
+                GuessTextBox.Visible = false;
+                EnterGuess.Visible = false;
+                if (StateLabel.InvokeRequired)
+                {
+                    StateLabel.BeginInvoke((MethodInvoker)(() => StateLabel.Text = (message == "DEAD" ? "You are dead" : "Spectator")));
+                }
+                else
+                {
+                    StateLabel.Text = (message == "DEAD" ? "You are dead" : "Spectator");
+                }
+            }
+            if (message.StartsWith("WIN"))
+            {
+                if (message.Split()[1] == player.PlayerId)
+                {
+                    Invoke(new Action(() =>
+                    {
+                    player.MessageReceived -= OnMessageReceived;
+                    Winner winner = new Winner();
+                    winner.Show();
+                    this.Hide();
+
+                    }));
+
+                }
+                else
+                {
+                    Invoke(new Action(() => {
+                   player.MessageReceived -= OnMessageReceived;
+                    Loser loser = new Loser();
+                    loser.Show();
+                    this.Hide();
+                    }));
+                }
+            }
+            if (message.StartsWith("GUESS"))
+            {
+                MessageBox.Show($"Last guess is {message.Split()[2]} has {message.Split()[1]} correct letters");
+            }
         }
 
         private void EnterGuess_Click(object sender, EventArgs e)
-        {/*
-            string guess = GuessTextBox.Text;
-            string ans = player.SendRequestToServer($"CHECK_GUESS {player.PlayerId} {roomId} {guess}");
-            if (ans.StartsWith("TRUE"))
-            {
-                Word.Text = guess;
-                Thread.Sleep(3000);
-                // فورم الاعدام
-            }
-            else
-            {
-                Word.Text = $"{guess} has {ans.Split(' ')[1]} correct letters";
-                Thread.Sleep(3000);
-                player.SendRequestToServer($"NEXT_ROUND {roomId}");
-            
-            }*/
-        }
-        void CloseTheared()
         {
-            stopThread = true;
-            if (listeningThread != null && listeningThread.IsAlive)
-            {
-                listeningThread.Join();
-            }
+            if(string.IsNullOrWhiteSpace(GuessTextBox.Text))
+                MessageBox.Show("Please enter a guess");
+            else
+                player.SendMessage($"GUESS {player.PlayerId} {roomId} {GuessTextBox.Text}");
         }
         private void GamePlay_FormClosing(object sender, FormClosingEventArgs e)
         {
-            CloseTheared();
+            //CloseTheared();
+            player.MessageReceived -= OnMessageReceived;
             player.Disconnect();
             Application.Exit();
         }
